@@ -1,14 +1,85 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  REQUESTER
+  MANAGER
+  FINANCE
+  ADMIN
+}
+
+enum RequestStatus {
+  DRAFT
+  WAITING_FOR_MANAGER
+  WAITING_FOR_FINANCE
+  APPROVED
+  REJECTED
+}
+
+enum RequestType {
+  PURCHASE
+  REIMBURSEMENT
+  SUBSCRIPTION
+  INVOICE_PAYMENT
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id       String  @id
+  email    String  @unique
+  name     String
+  roles    Role[]
+  isActive Boolean @default(true)
+
+  requests FinanceRequest[] @relation("UserRequests")
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  decisions Decision[]
+}
+
+model FinanceRequest {
+  id          String @id @default(cuid())
+  createdById String
+  createdBy   User   @relation("UserRequests", fields: [createdById], references: [id])
+
+  status RequestStatus
+  type   RequestType
+  title  String
+  amount Float
+  reason String
+
+  vendor        String?
+  costCenter    String?
+  expenseDate   DateTime?
+  billingCycle  BillingCycle?
+  invoiceNumber String?
+
+  decisions Decision[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Decision {
+  id        String         @id @default(cuid())
+  requestId String
+  request   FinanceRequest @relation(fields: [requestId], references: [id])
+
+  step        Role // MANAGER or FINANCE
+  action      String // APPROVE / REJECT
+  decidedById String
+  decidedBy   User    @relation(fields: [decidedById], references: [id])
+  reason      String?
+
+  createdAt DateTime @default(now())
 }
