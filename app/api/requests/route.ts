@@ -21,11 +21,10 @@ export async function POST(req: Request) {
       createdById: me.id,
       status: "DRAFT",
       type: parsed.data.type,
-
-      // start empty-ish; user edits later
-      title: "",
-      amount: 1,
-      reason: "",
+      
+      title: null!,
+      amount: null!,
+      reason: null!,
     },
     select: { id: true, status: true, type: true },
   });

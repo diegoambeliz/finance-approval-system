@@ -54,9 +54,10 @@ model FinanceRequest {
 
   status RequestStatus
   type   RequestType
-  title  String
-  amount Float
-  reason String
+  
+  title  String?
+  amount Float?
+  reason String?
 
   vendor        String?
   costCenter    String?

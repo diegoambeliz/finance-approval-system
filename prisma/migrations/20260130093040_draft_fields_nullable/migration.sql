@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "FinanceRequest" ALTER COLUMN "title" DROP NOT NULL,
+ALTER COLUMN "amount" DROP NOT NULL,
+ALTER COLUMN "reason" DROP NOT NULL;

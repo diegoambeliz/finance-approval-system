@@ -50,9 +50,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const updated = await prisma.financeRequest.update({
     where: { id: params.id },
     data: {
-      ...("title" in data ? { title: data.title ?? existing.title } : {}),
-      ...("amount" in data ? { amount: data.amount ?? existing.amount } : {}),
-      ...("reason" in data ? { reason: data.reason ?? existing.reason } : {}),
+      ...("title" in data ? { title: data.title ?? existing.title ?? null } : {}),
+      ...("amount" in data ? { amount: data.amount ?? existing.amount ?? null } : {}),
+      ...("reason" in data ? { reason: data.reason ?? existing.reason ?? null } : {}),
 
       vendor: data.vendor ?? existing.vendor,
       costCenter: data.costCenter ?? existing.costCenter,
