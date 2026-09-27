@@ -12,7 +12,7 @@ async function getRequest(id: string) {
 }
 
 export default async function RequestDetailPage({ params }: { params: { id: string } }) {
-  const data = await getRequest(params.id);
+  const data = await getRequest(((await params).id));
 
   // If server fetch fails locally, RequestEditor will client-load.
   const initial = data?.request ?? null;
@@ -22,7 +22,7 @@ export default async function RequestDetailPage({ params }: { params: { id: stri
       <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Request</h1>
       <p style={{ opacity: 0.8, marginBottom: 16 }}>Edit your draft, then submit for approval.</p>
 
-      <RequestEditor requestId={params.id} initial={initial} />
+      <RequestEditor requestId={(await params).id} initial={initial} />
 
       <div style={{ marginTop: 18 }}>
         <DecisionsTimeline initial={initial?.decisions ?? []} />

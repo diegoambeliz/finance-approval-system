@@ -18,7 +18,9 @@ export async function POST(req: Request) {
 
   const created = await prisma.financeRequest.create({
     data: {
-      createdById: me.id,
+       createdBy: {
+      connect: { id: me.id },
+    },
       status: "DRAFT",
       type: parsed.data.type,
       
