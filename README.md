@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SpendFlow
 
-## Getting Started
+An internal finance approval workflow system. Requesters create purchase/reimbursement/subscription/invoice-payment requests, which move through a manager and finance review before being approved:
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+DRAFT → WAITING_FOR_MANAGER → WAITING_FOR_FINANCE → APPROVED
+                 └──────────────┴──────────────────→ REJECTED
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Roles are `REQUESTER`, `MANAGER`, `FINANCE`, `ADMIN` - a user can hold more than one at once.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Next.js (App Router) + React + TypeScript, PostgreSQL via Prisma, Clerk for authentication, Zod for validation, Vitest for tests.
 
-## Learn More
+## Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js 20+
+- A PostgreSQL server reachable from your machine (this project was developed against a native local install, but any Postgres works)
+- A Clerk application (for authentication)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy these into a `.env` file at the project root (never commit this file - `.env*` is gitignored):
 
-## Deploy on Vercel
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Postgres connection string for the app's database, e.g. `postgresql://user:pass@localhost:5432/finance_approval_system?schema=public` |
+| `CLERK_SECRET_KEY` | Clerk backend secret key (server-only, never sent to the client) |
+| `CLERK_WEBHOOK_SECRET` | Signing secret for the Clerk webhook at `/api/webhooks/clerk`, which syncs Clerk users into our `User` table |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (safe to expose to the client) |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL` | Where Clerk redirects after sign-in if no other redirect is set |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL` | Where Clerk redirects after sign-up if no other redirect is set |
+| `NEXT_PUBLIC_APP_URL` | This app's own base URL (e.g. `http://localhost:3000`), used by server components to call our own API during server-side rendering |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Only `NEXT_PUBLIC_*` variables are ever exposed to the browser; everything else stays server-only.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Setup
+
+```bash
+npm install
+npx prisma migrate deploy   # apply migrations to the database in DATABASE_URL
+npx prisma db seed          # optional: creates demo requester/manager/finance/admin users
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Testing
+
+```bash
+npm run test          # everything under vitest (currently: unit tests)
+npm run test:unit      # domain/, server/, lib/ - fast, no database needed
+npm run test:watch     # interactive watch mode
+```
+
+Unit tests never touch a real database. A small number of Prisma-level scripts under `scripts/` do talk to a real, isolated Postgres database for manual verification (concurrency guards, migration isolation) - never the dev database:
+
+```bash
+npm run test:db:up       # derive .env.test from .env and create <dbname>_test if it doesn't exist
+npm run test:db:migrate  # apply migrations to that isolated test database
+npm run test:db:reset    # drop and recreate it from scratch
+```
+
+Every one of those commands refuses to run unless the resolved database name ends in `_test`, so they can't accidentally target the dev database.
+
+Integration and end-to-end test suites don't exist yet in this repo.
+
+## Other scripts
+
+```bash
+npm run build   # production build
+npm run lint     # eslint
+```
