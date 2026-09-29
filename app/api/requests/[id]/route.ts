@@ -2,11 +2,12 @@ import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
 import { UpdateDraftSchema } from "@/server/requests/validators";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const me = await getDbUserOrThrow();
 
   const request = await prisma.financeRequest.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       decisions: {
         orderBy: { createdAt: "asc" },
@@ -25,10 +26,11 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   return Response.json({ request });
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id: params.id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   // only owner + REQUESTER can edit drafts
@@ -48,7 +50,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const data = parsed.data;
 
   const updated = await prisma.financeRequest.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...("title" in data ? { title: data.title ?? existing.title ?? null } : {}),
       ...("amount" in data ? { amount: data.amount ?? existing.amount ?? null } : {}),

@@ -4,10 +4,11 @@ import { dbToDomainRequest } from "@/server/requests/mapper";
 import { canSubmit } from "@/domain/rules";
 import { submitRequest } from "@/domain/transitions";
 
-export async function POST(_: Request, { params }: { params: { id: string } }) {
+export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id: params.id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   // Domain rule check
@@ -28,7 +29,7 @@ export async function POST(_: Request, { params }: { params: { id: string } }) {
   }
 
   const updated = await prisma.financeRequest.update({
-    where: { id: params.id },
+    where: { id },
     data: { status: next.status },
     select: { id: true, status: true },
   });

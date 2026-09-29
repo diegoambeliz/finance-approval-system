@@ -10,8 +10,9 @@ const BodySchema = z.object({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const me = await getDbUserOrThrow();
   requireRole(me, "ADMIN");
 
@@ -27,7 +28,7 @@ export async function PATCH(
 
   const roles = parsed.data.roles as Role[];
 
-  if (params.id === me.id && !roles.includes("ADMIN")) {
+  if (id === me.id && !roles.includes("ADMIN")) {
     return Response.json(
       { error: "You cannot remove ADMIN from yourself." },
       { status: 400 }
@@ -35,7 +36,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.user.update({
-    where: { id: (await params).id },
+    where: { id },
     data: { roles },
     select: {
       id: true,

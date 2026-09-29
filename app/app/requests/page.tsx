@@ -1,17 +1,18 @@
+import { cookies } from "next/headers";
 import NewRequestButton from "./NewRequestButton";
 import RequestsTable from "./RequestsTable";
 
 async function getRequests() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/requests`, {
-    // On Vercel, NEXT_PUBLIC_APP_URL should be set. In local, fetch relative from client;
-    // so for server fetch, we’ll use the built-in Request Headers trick in next step if needed.
+    // Forward the user's cookies so Clerk sees this server fetch as signed in.
+    headers: { cookie: (await cookies()).toString() },
     cache: "no-store",
   }).catch(() => null);
 
-  // If server fetch fails (common locally), we’ll let client load instead.
+  // If server fetch fails, we'll let client load instead.
   if (!res || !res.ok) return null;
 
-  return res.json() as Promise<{ requests: any[] }>;
+  return res.json().catch(() => null) as Promise<{ requests: any[] } | null>;
 }
 
 export const dynamic = "force-dynamic";

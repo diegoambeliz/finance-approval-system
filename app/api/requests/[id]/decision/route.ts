@@ -5,10 +5,11 @@ import { canManagerDecide, canFinanceDecide } from "@/domain/rules";
 import { applyManagerDecision, applyFinanceDecision } from "@/domain/transitions";
 import { DecisionSchema } from "@/server/requests/validators";
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id: params.id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   const body = await req.json().catch(() => null);
@@ -34,14 +35,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const result = await prisma.$transaction(async (tx) => {
       const updated = await tx.financeRequest.update({
-        where: { id: params.id },
+        where: { id },
         data: { status: next.status },
         select: { id: true, status: true },
       });
 
       await tx.decision.create({
         data: {
-          requestId: params.id,
+          requestId: id,
           step: "MANAGER",
           action: parsed.data.action,
           reason: parsed.data.reason ?? null,
@@ -65,14 +66,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const result = await prisma.$transaction(async (tx) => {
       const updated = await tx.financeRequest.update({
-        where: { id: params.id },
+        where: { id },
         data: { status: next.status },
         select: { id: true, status: true },
       });
 
       await tx.decision.create({
         data: {
-          requestId: params.id,
+          requestId: id,
           step: "FINANCE",
           action: parsed.data.action,
           reason: parsed.data.reason ?? null,
