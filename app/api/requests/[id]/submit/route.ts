@@ -8,7 +8,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id: (await params).id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   // Domain rule check
@@ -30,7 +30,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   }
 
   const updated = await prisma.financeRequest.update({
-    where: { id: (await params).id },
+    where: { id },
     data: { status: next.status },
     select: { id: true, status: true },
   });

@@ -7,7 +7,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const me = await getDbUserOrThrow();
 
   const request = await prisma.financeRequest.findUnique({
-    where: { id: (await params).id },
+    where: { id },
     include: {
       decisions: {
         orderBy: { createdAt: "asc" },
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id: (await params).id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   // only owner + REQUESTER can edit drafts
@@ -50,7 +50,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const data = parsed.data;
 
   const updated = await prisma.financeRequest.update({
-    where: { id: (await params).id },
+    where: { id },
     data: {
       ...("title" in data ? { title: data.title ?? existing.title ?? null } : {}),
       ...("amount" in data ? { amount: data.amount ?? existing.amount ?? null } : {}),
