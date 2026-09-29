@@ -30,9 +30,11 @@ export type FinanceRequest = {
   status: RequestStatus;
   type: RequestType;
 
-  title: string;
-  amount: number;
-  reason: string;
+  // Nullable in the DB: a DRAFT can exist before these are filled in.
+  // Submission validation (validateForSubmit) is what decides completeness.
+  title?: string;
+  amount?: number;
+  reason?: string;
 
   // type-specific fields
   vendor?: string; // PURCHASE, SUBSCRIPTION, INVOICE_PAYMENT

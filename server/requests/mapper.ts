@@ -8,9 +8,9 @@ export function dbToDomainRequest(r: DbRequest): DomainRequest {
     status: r.status,
     type: r.type,
 
-    title: r.title,
-    amount: r.amount,
-    reason: r.reason,
+    title: r.title ?? undefined,
+    amount: r.amount ?? undefined,
+    reason: r.reason ?? undefined,
 
     vendor: r.vendor ?? undefined,
     costCenter: r.costCenter ?? undefined,

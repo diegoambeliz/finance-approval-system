@@ -20,13 +20,13 @@ export function validateForSubmit(req: FinanceRequest): SimpleResult {
 
   // Global requirements
   if (isBlank(req.type)) add(errors, "type", "Type is required.");
-  if (isBlank(req.title) || req.title.trim().length < MIN_TITLE_LEN) {
+  if ((req.title ?? "").trim().length < MIN_TITLE_LEN) {
     add(errors, "title", `Title must be at least ${MIN_TITLE_LEN} characters.`);
   }
   if (typeof req.amount !== "number" || Number.isNaN(req.amount) || req.amount <= 0) {
     add(errors, "amount", "Amount must be greater than 0.");
   }
-  if (isBlank(req.reason) || req.reason.trim().length < MIN_REASON_LEN) {
+  if ((req.reason ?? "").trim().length < MIN_REASON_LEN) {
     add(errors, "reason", `Reason must be at least ${MIN_REASON_LEN} characters.`);
   }
 
