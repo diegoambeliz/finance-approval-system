@@ -4,7 +4,7 @@ import { dbToDomainRequest } from "@/server/requests/mapper";
 import { canManagerDecide, canFinanceDecide } from "@/domain/rules";
 import { applyManagerDecision, applyFinanceDecision } from "@/domain/transitions";
 import { DecisionSchema } from "@/server/requests/validators";
-import { forbidden, invalidState, notFound, validationError } from "@/server/errors";
+import { conflict, forbidden, invalidState, notFound, validationError } from "@/server/errors";
 import { withApiErrors } from "@/server/apiHandler";
 
 export const POST = withApiErrors(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
@@ -36,11 +36,18 @@ export const POST = withApiErrors(async (req: Request, { params }: { params: Pro
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const updated = await tx.financeRequest.update({
-        where: { id },
+      // Atomic guard: the update only applies if status is still what we
+      // validated against. A concurrent decision on the same request (two
+      // managers, or a duplicate request) will find zero rows here instead
+      // of silently overwriting an already-decided request.
+      const { count } = await tx.financeRequest.updateMany({
+        where: { id, status: domainReq.status },
         data: { status: next.status },
-        select: { id: true, status: true },
       });
+
+      if (count === 0) {
+        throw conflict("This request was already decided by someone else. Please refresh and try again.");
+      }
 
       await tx.decision.create({
         data: {
@@ -52,7 +59,7 @@ export const POST = withApiErrors(async (req: Request, { params }: { params: Pro
         },
       });
 
-      return updated;
+      return { id, status: next.status };
     });
 
     return Response.json({ request: result });
@@ -67,11 +74,14 @@ export const POST = withApiErrors(async (req: Request, { params }: { params: Pro
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const updated = await tx.financeRequest.update({
-        where: { id },
+      const { count } = await tx.financeRequest.updateMany({
+        where: { id, status: domainReq.status },
         data: { status: next.status },
-        select: { id: true, status: true },
       });
+
+      if (count === 0) {
+        throw conflict("This request was already decided by someone else. Please refresh and try again.");
+      }
 
       await tx.decision.create({
         data: {
@@ -83,7 +93,7 @@ export const POST = withApiErrors(async (req: Request, { params }: { params: Pro
         },
       });
 
-      return updated;
+      return { id, status: next.status };
     });
 
     return Response.json({ request: result });

@@ -3,7 +3,7 @@ import { getDbUserOrThrow } from "@/server/auth";
 import { dbToDomainRequest } from "@/server/requests/mapper";
 import { canSubmit } from "@/domain/rules";
 import { submitRequest } from "@/domain/transitions";
-import { invalidState, notFound, validationError } from "@/server/errors";
+import { conflict, invalidState, notFound, validationError } from "@/server/errors";
 import { withApiErrors } from "@/server/apiHandler";
 
 export const POST = withApiErrors(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
@@ -30,11 +30,18 @@ export const POST = withApiErrors(async (_: Request, { params }: { params: Promi
     throw invalidState("This request can no longer be submitted.");
   }
 
-  const updated = await prisma.financeRequest.update({
-    where: { id },
+  // Atomic guard: only actually transition if the status is still what we
+  // just validated against. If another request already changed it (a
+  // duplicate submit, or the request was edited concurrently), this matches
+  // zero rows instead of blindly overwriting whatever is there now.
+  const { count } = await prisma.financeRequest.updateMany({
+    where: { id, status: existing.status },
     data: { status: next.status },
-    select: { id: true, status: true },
   });
 
-  return Response.json({ request: updated });
+  if (count === 0) {
+    throw conflict("This request was already submitted or changed. Please refresh and try again.");
+  }
+
+  return Response.json({ request: { id, status: next.status } });
 });
