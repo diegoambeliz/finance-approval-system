@@ -26,7 +26,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
       <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Request</h1>
       <p style={{ opacity: 0.8, marginBottom: 16 }}>Edit your draft, then submit for approval.</p>
 
-      <RequestEditor requestId={id} initial={initial} />
+      <RequestEditor requestId={(await params).id} initial={initial} />
 
       <div style={{ marginTop: 18 }}>
         <DecisionsTimeline initial={initial?.decisions ?? []} />

@@ -8,13 +8,14 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
-  const existing = await prisma.financeRequest.findUnique({ where: { id } });
+  const existing = await prisma.financeRequest.findUnique({ where: { id: (await params).id } });
   if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
 
   // Domain rule check
   const domainReq = dbToDomainRequest(existing);
   const domainUser = { id: me.id, roles: me.roles as any };
 
+  console.log(domainReq, domainUser)
   const allowed = canSubmit(domainUser, domainReq);
   if (!allowed.ok) {
     return Response.json({ error: "CANNOT_SUBMIT", details: allowed.errors }, { status: 400 });
@@ -29,7 +30,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   }
 
   const updated = await prisma.financeRequest.update({
-    where: { id },
+    where: { id: (await params).id },
     data: { status: next.status },
     select: { id: true, status: true },
   });
