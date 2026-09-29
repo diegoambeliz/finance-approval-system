@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 
 const TYPES = ["PURCHASE", "REIMBURSEMENT", "SUBSCRIPTION", "INVOICE_PAYMENT"] as const;
 
@@ -16,17 +17,18 @@ export default function NewRequestButton() {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type }),
-    });
-
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ request?: { id: string }; error?: { message: string } }>(
+      "/api/requests",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      }
+    );
 
     setLoading(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to create draft.");
       return;
     }

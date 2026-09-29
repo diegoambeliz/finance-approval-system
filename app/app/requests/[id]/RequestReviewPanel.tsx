@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TYPE_FIELDS, FIELD_LABELS } from "../typeFields";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Req = {
   id: string;
@@ -45,15 +46,16 @@ export default function RequestReviewPanel({
     setLoading(true);
     setError(null);
 
-    const res = await fetch(`/api/requests/${requestId}`);
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ request: Req; error?: { message: string } }>(
+      `/api/requests/${requestId}`
+    );
     setLoading(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to load request.");
       return;
     }
-    setReq(data.request);
+    setReq(data?.request ?? null);
   }
 
   useEffect(() => {
@@ -66,15 +68,17 @@ export default function RequestReviewPanel({
     setError(null);
     setNotice(null);
 
-    const res = await fetch(`/api/requests/${requestId}/decision`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action, reason }),
-    });
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ error?: { message: string } }>(
+      `/api/requests/${requestId}/decision`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, reason }),
+      }
+    );
     setDeciding(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to submit decision.");
       return;
     }

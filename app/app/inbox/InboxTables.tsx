@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Row = {
   id: string;
@@ -31,17 +32,19 @@ export default function InboxTables({
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/requests/inbox", { method: "GET" });
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ queues: Queues; error?: { message: string } }>(
+      "/api/requests/inbox",
+      { method: "GET" }
+    );
 
     setLoading(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to load inbox.");
       return;
     }
 
-    setQueues(data.queues ?? null);
+    setQueues(data?.queues ?? null);
   }
 
   useEffect(() => {

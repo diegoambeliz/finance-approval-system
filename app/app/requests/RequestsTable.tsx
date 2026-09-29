@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/apiFetch";
 
 type Row = {
   id: string;
@@ -22,17 +23,18 @@ export default function RequestsTable({ initial }: { initial: Row[] | null }) {
     setLoading(true);
     setError(null);
 
-    const res = await fetch("/api/requests", { method: "GET" });
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ requests: Row[]; error?: { message: string } }>("/api/requests", {
+      method: "GET",
+    });
 
     setLoading(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to load requests.");
       return;
     }
 
-    setRows(data.requests ?? []);
+    setRows(data?.requests ?? []);
   }
 
   useEffect(() => {

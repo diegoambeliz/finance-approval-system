@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TYPE_FIELDS } from "../typeFields";
+import { apiFetch } from "@/lib/apiFetch";
 
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim().length === 0;
@@ -39,15 +40,16 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
   async function load() {
     setLoading(true);
     setError(null);
-    const res = await fetch(`/api/requests/${requestId}`);
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ request: Req; error?: { message: string } }>(
+      `/api/requests/${requestId}`
+    );
     setLoading(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to load request.");
       return;
     }
-    setReq(data.request);
+    setReq(data?.request ?? null);
   }
 
   useEffect(() => {
@@ -87,31 +89,32 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setError(null);
     setNotice(null);
 
-    const res = await fetch(`/api/requests/${requestId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: req.title ?? undefined,
-        amount: req.amount ?? undefined,
-        reason: req.reason ?? undefined,
-        vendor: req.vendor ?? undefined,
-        costCenter: req.costCenter ?? undefined,
-        invoiceNumber: req.invoiceNumber ?? undefined,
-        billingCycle: req.billingCycle ?? undefined,
-        expenseDate: req.expenseDate ?? undefined,
-      }),
-    });
-
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ request: Partial<Req>; error?: { message: string } }>(
+      `/api/requests/${requestId}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: req.title ?? undefined,
+          amount: req.amount ?? undefined,
+          reason: req.reason ?? undefined,
+          vendor: req.vendor ?? undefined,
+          costCenter: req.costCenter ?? undefined,
+          invoiceNumber: req.invoiceNumber ?? undefined,
+          billingCycle: req.billingCycle ?? undefined,
+          expenseDate: req.expenseDate ?? undefined,
+        }),
+      }
+    );
     setSaving(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to save.");
       return;
     }
 
     setNotice("Saved.");
-    setReq((prev) => (prev ? { ...prev, ...data.request } : prev));
+    setReq((prev) => (prev ? { ...prev, ...data?.request } : prev));
     router.refresh();
   }
 
@@ -121,12 +124,13 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setError(null);
     setNotice(null);
 
-    const res = await fetch(`/api/requests/${requestId}/submit`, { method: "POST" });
-    const data = await res.json().catch(() => null);
+    const { ok, data } = await apiFetch<{ error?: { message: string } }>(`/api/requests/${requestId}/submit`, {
+      method: "POST",
+    });
 
     setSubmitting(false);
 
-    if (!res.ok) {
+    if (!ok) {
       setError(data?.error?.message ?? "Failed to submit.");
       return;
     }
