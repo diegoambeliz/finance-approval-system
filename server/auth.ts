@@ -9,6 +9,7 @@ export async function getDbUserOrThrow() {
 
   const dbUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!dbUser) throw forbidden("Your account isn't set up yet. Please contact an administrator.");
+  if (!dbUser.isActive) throw forbidden("Your account has been disabled. Please contact an administrator.");
 
   return dbUser;
 }
