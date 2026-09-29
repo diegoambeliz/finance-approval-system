@@ -136,8 +136,11 @@ export default function RequestReviewPanel({
           <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
             <div style={{ fontWeight: 800, marginBottom: 8 }}>Reject request</div>
 
-            <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Reason</label>
+            <label htmlFor="reject-reason" style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
+              Reason
+            </label>
             <textarea
+              id="reject-reason"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd", minHeight: 80 }}

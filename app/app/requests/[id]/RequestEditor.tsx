@@ -306,7 +306,6 @@ const input: React.CSSProperties = {
   padding: "10px 12px",
   borderRadius: 10,
   border: "1px solid #ddd",
-  outline: "none",
 };
 
 const btnSecondary: React.CSSProperties = {

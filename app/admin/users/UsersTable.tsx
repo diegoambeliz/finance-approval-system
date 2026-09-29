@@ -83,7 +83,11 @@ export default function UsersTable({ users, meId }: { users: UserRow[]; meId: st
   return (
     <section style={{ border: "1px solid #ddd", borderRadius: 12, overflow: "hidden" }}>
       <div style={{ padding: 12, borderBottom: "1px solid #eee", display: "flex", gap: 12 }}>
+        <label htmlFor="admin-users-search" style={visuallyHidden}>
+          Search users by name, email, or id
+        </label>
         <input
+          id="admin-users-search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or id..."
@@ -92,7 +96,6 @@ export default function UsersTable({ users, meId }: { users: UserRow[]; meId: st
             padding: "10px 12px",
             border: "1px solid #ddd",
             borderRadius: 10,
-            outline: "none",
           }}
         />
       </div>
@@ -213,4 +216,16 @@ const th: React.CSSProperties = {
 const td: React.CSSProperties = {
   padding: 12,
   verticalAlign: "top",
+};
+
+const visuallyHidden: React.CSSProperties = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
 };

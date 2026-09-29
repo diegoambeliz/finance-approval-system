@@ -76,8 +76,11 @@ export default function NewRequestButton() {
         >
           <div style={{ fontWeight: 800, marginBottom: 8 }}>Create draft</div>
 
-          <label style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Type</label>
+          <label htmlFor="new-request-type" style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
+            Type
+          </label>
           <select
+            id="new-request-type"
             value={type}
             onChange={(e) => setType(e.target.value as any)}
             style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
