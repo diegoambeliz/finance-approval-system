@@ -8,6 +8,7 @@ const manager: User = { id: "m1", roles: ["MANAGER"] };
 const finance: User = { id: "f1", roles: ["FINANCE"] };
 const admin: User = { id: "a1", roles: ["ADMIN"] };
 const adminManager: User = { id: "am1", roles: ["ADMIN", "MANAGER"] };
+const adminFinance: User = { id: "af1", roles: ["ADMIN", "FINANCE"] };
 
 function req(overrides: Partial<FinanceRequest> = {}): FinanceRequest {
   return {
@@ -62,11 +63,34 @@ describe("rules", () => {
     expect(canManagerDecide(adminManager, req({ status: "WAITING_FOR_MANAGER" }))).toBe(true);
   });
 
+  it("requester cannot manager-decide, even on WAITING_FOR_MANAGER", () => {
+    expect(canManagerDecide(requester, req({ status: "WAITING_FOR_MANAGER" }))).toBe(false);
+  });
+
   it("finance can decide only on WAITING_FOR_FINANCE", () => {
     expect(canFinanceDecide(finance, req({ status: "WAITING_FOR_FINANCE" }))).toBe(true);
     expect(canFinanceDecide(finance, req({ status: "WAITING_FOR_MANAGER" }))).toBe(false);
     expect(canFinanceDecide(manager, req({ status: "WAITING_FOR_FINANCE" }))).toBe(false);
+    expect(canFinanceDecide(adminFinance, req({ status: "WAITING_FOR_FINANCE" }))).toBe(true);
   });
+
+  it("requester cannot finance-decide, even on WAITING_FOR_FINANCE", () => {
+    expect(canFinanceDecide(requester, req({ status: "WAITING_FOR_FINANCE" }))).toBe(false);
+  });
+
+  it.each(["DRAFT", "WAITING_FOR_FINANCE", "APPROVED", "REJECTED"] as const)(
+    "manager cannot decide when status is %s",
+    (status) => {
+      expect(canManagerDecide(manager, req({ status }))).toBe(false);
+    }
+  );
+
+  it.each(["DRAFT", "WAITING_FOR_MANAGER", "APPROVED", "REJECTED"] as const)(
+    "finance cannot decide when status is %s",
+    (status) => {
+      expect(canFinanceDecide(finance, req({ status }))).toBe(false);
+    }
+  );
 
   it("requester can view only own; manager/finance/admin can view all", () => {
     expect(canViewRequest(requester, req({ createdById: "u1" }))).toBe(true);
