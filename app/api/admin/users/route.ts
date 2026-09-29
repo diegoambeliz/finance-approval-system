@@ -9,6 +9,9 @@ export const GET = withApiErrors(async () => {
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
+    // Safety cap, not real pagination - this list has no UI for paging yet.
+    // Prevents an unbounded scan/response once the table has real volume.
+    take: 200,
     select: {
       id: true,
       email: true,

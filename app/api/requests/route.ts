@@ -44,6 +44,9 @@ export const GET = withApiErrors(async () => {
   const requests = await prisma.financeRequest.findMany({
     where: isPrivileged ? {} : { createdById: me.id },
     orderBy: { createdAt: "desc" },
+    // Safety cap, not real pagination - this list has no UI for paging yet.
+    // Prevents an unbounded scan/response once the table has real volume.
+    take: 200,
     select: {
       id: true,
       status: true,

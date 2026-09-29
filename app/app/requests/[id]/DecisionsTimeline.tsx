@@ -1,5 +1,3 @@
-"use client";
-
 function describe(d: any): string {
   const who = d.decidedBy?.name ?? "Someone";
   const step = d.step === "MANAGER" ? "manager" : "finance";
