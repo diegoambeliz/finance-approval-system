@@ -69,6 +69,9 @@ model FinanceRequest {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([createdById])
+  @@index([status])
 }
 
 model Decision {
@@ -83,4 +86,9 @@ model Decision {
   reason      String?
 
   createdAt DateTime @default(now())
+
+  // The workflow never revisits a step once decided, so at most one decision
+  // can legitimately exist per (request, step) - this is the database-level
+  // backstop for the atomic status-guard in the decision endpoint.
+  @@unique([requestId, step])
 }
