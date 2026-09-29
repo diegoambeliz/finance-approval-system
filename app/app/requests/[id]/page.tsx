@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import RequestEditor from "./RequestEditor";
+import RequestReviewPanel from "./RequestReviewPanel";
 import DecisionsTimeline from "./DecisionsTimeline";
+import { getDbUserOrThrow } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,17 +18,28 @@ async function getRequest(id: string) {
 
 export default async function RequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await getRequest(id);
+  const [data, me] = await Promise.all([getRequest(id), getDbUserOrThrow()]);
 
-  // If server fetch fails locally, RequestEditor will client-load.
+  // If server fetch fails locally, the editor/review panel will client-load.
   const initial = data?.request ?? null;
+
+  const isOwner = initial ? initial.createdById === me.id : false;
+  const isManager = me.roles.includes("MANAGER");
+  const isFinance = me.roles.includes("FINANCE");
+  const isDraftOwner = isOwner && initial?.status === "DRAFT";
 
   return (
     <main>
       <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Request</h1>
-      <p style={{ opacity: 0.8, marginBottom: 16 }}>Edit your draft, then submit for approval.</p>
+      <p style={{ opacity: 0.8, marginBottom: 16 }}>
+        {isDraftOwner ? "Edit your draft, then submit for approval." : "Review request details."}
+      </p>
 
-      <RequestEditor requestId={(await params).id} initial={initial} />
+      {isDraftOwner ? (
+        <RequestEditor requestId={id} initial={initial} />
+      ) : (
+        <RequestReviewPanel requestId={id} initial={initial} isManager={isManager} isFinance={isFinance} />
+      )}
 
       <div style={{ marginTop: 18 }}>
         <DecisionsTimeline initial={initial?.decisions ?? []} />

@@ -11,7 +11,15 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     include: {
       decisions: {
         orderBy: { createdAt: "asc" },
-        select: { id: true, step: true, action: true, reason: true, decidedById: true, createdAt: true },
+        select: {
+          id: true,
+          step: true,
+          action: true,
+          reason: true,
+          decidedById: true,
+          decidedBy: { select: { name: true } },
+          createdAt: true,
+        },
       },
     },
   });
