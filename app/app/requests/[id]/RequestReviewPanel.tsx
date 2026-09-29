@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TYPE_FIELDS, FIELD_LABELS } from "../typeFields";
 
 type Req = {
   id: string;
@@ -17,22 +18,6 @@ type Req = {
   expenseDate?: string | null;
   billingCycle?: string | null;
   invoiceNumber?: string | null;
-};
-
-// Mirrors the type-specific fields documented in domain/types.ts
-const TYPE_FIELDS: Record<string, (keyof Req)[]> = {
-  PURCHASE: ["vendor", "costCenter"],
-  REIMBURSEMENT: ["expenseDate"],
-  SUBSCRIPTION: ["vendor", "billingCycle"],
-  INVOICE_PAYMENT: ["vendor", "invoiceNumber"],
-};
-
-const FIELD_LABELS: Record<string, string> = {
-  vendor: "Vendor",
-  costCenter: "Cost Center",
-  expenseDate: "Expense Date",
-  billingCycle: "Billing Cycle",
-  invoiceNumber: "Invoice Number",
 };
 
 const DECISION_ERROR_MESSAGES: Record<string, string> = {
@@ -143,7 +128,7 @@ export default function RequestReviewPanel({
         <ReadField label="Amount" value={req.amount == null ? null : `$${req.amount}`} />
 
         {relevantFields.map((f) => (
-          <ReadField key={f} label={FIELD_LABELS[f]} value={(req[f] as string | null | undefined) ?? null} />
+          <ReadField key={f} label={FIELD_LABELS[f]} value={((req as Record<string, unknown>)[f] as string | null | undefined) ?? null} />
         ))}
 
         <div style={{ gridColumn: "1 / -1" }}>

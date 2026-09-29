@@ -15,7 +15,6 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   const domainReq = dbToDomainRequest(existing);
   const domainUser = { id: me.id, roles: me.roles as any };
 
-  console.log(domainReq, domainUser)
   const allowed = canSubmit(domainUser, domainReq);
   if (!allowed.ok) {
     return Response.json({ error: "CANNOT_SUBMIT", details: allowed.errors }, { status: 400 });

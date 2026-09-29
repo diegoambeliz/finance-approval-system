@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { TYPE_FIELDS } from "../typeFields";
+
+function isBlank(v: unknown): boolean {
+  return typeof v !== "string" || v.trim().length === 0;
+}
 
 type Req = {
   id: string;
@@ -52,16 +57,24 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
 
   const isDraft = req?.status === "DRAFT";
 
+  const typeFields = useMemo(() => (req ? TYPE_FIELDS[req.type] ?? [] : []), [req]);
+
   const missing = useMemo(() => {
     if (!req) return [];
     const m: string[] = [];
     if (!req.title || req.title.trim().length < 3) m.push("title");
     if (req.amount == null || req.amount <= 0) m.push("amount");
-    if (!req.reason || req.reason.trim().length === 0) m.push("reason");
-    if (!req.vendor || req.vendor.trim().length === 0) m.push("vendor");
-    if (!req.costCenter || req.costCenter.trim().length === 0) m.push("costCenter");
+    if (!req.reason || req.reason.trim().length < 10) m.push("reason");
+
+    for (const f of typeFields) {
+      if (f === "billingCycle") {
+        if (req.billingCycle !== "MONTHLY" && req.billingCycle !== "YEARLY") m.push("billingCycle");
+      } else if (isBlank((req as Record<string, unknown>)[f])) {
+        m.push(f);
+      }
+    }
     return m;
-  }, [req]);
+  }, [req, typeFields]);
 
   function updateField<K extends keyof Req>(key: K, value: Req[K]) {
     if (!req) return;
@@ -85,7 +98,7 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
         costCenter: req.costCenter ?? undefined,
         invoiceNumber: req.invoiceNumber ?? undefined,
         billingCycle: req.billingCycle ?? undefined,
-        // NOTE: we keep expenseDate simple for now; add later if needed
+        expenseDate: req.expenseDate ?? undefined,
       }),
     });
 
@@ -166,25 +179,70 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
           />
         </Field>
 
-        <Field label="Vendor">
-          <input
-            value={req.vendor ?? ""}
-            onChange={(e) => updateField("vendor", e.target.value)}
-            disabled={!isDraft}
-            style={input}
-            placeholder="e.g., Apple"
-          />
-        </Field>
+        {typeFields.includes("vendor") ? (
+          <Field label="Vendor">
+            <input
+              value={req.vendor ?? ""}
+              onChange={(e) => updateField("vendor", e.target.value)}
+              disabled={!isDraft}
+              style={input}
+              placeholder="e.g., Apple"
+            />
+          </Field>
+        ) : null}
 
-        <Field label="Cost Center">
-          <input
-            value={req.costCenter ?? ""}
-            onChange={(e) => updateField("costCenter", e.target.value)}
-            disabled={!isDraft}
-            style={input}
-            placeholder="e.g., Engineering"
-          />
-        </Field>
+        {typeFields.includes("costCenter") ? (
+          <Field label="Cost Center">
+            <input
+              value={req.costCenter ?? ""}
+              onChange={(e) => updateField("costCenter", e.target.value)}
+              disabled={!isDraft}
+              style={input}
+              placeholder="e.g., Engineering"
+            />
+          </Field>
+        ) : null}
+
+        {typeFields.includes("expenseDate") ? (
+          <Field label="Expense Date">
+            <input
+              type="date"
+              value={req.expenseDate ?? ""}
+              onChange={(e) => updateField("expenseDate", e.target.value)}
+              disabled={!isDraft}
+              style={input}
+            />
+          </Field>
+        ) : null}
+
+        {typeFields.includes("billingCycle") ? (
+          <Field label="Billing Cycle">
+            <select
+              value={req.billingCycle ?? ""}
+              onChange={(e) => updateField("billingCycle", e.target.value)}
+              disabled={!isDraft}
+              style={input}
+            >
+              <option value="" disabled>
+                Select...
+              </option>
+              <option value="MONTHLY">Monthly</option>
+              <option value="YEARLY">Yearly</option>
+            </select>
+          </Field>
+        ) : null}
+
+        {typeFields.includes("invoiceNumber") ? (
+          <Field label="Invoice Number">
+            <input
+              value={req.invoiceNumber ?? ""}
+              onChange={(e) => updateField("invoiceNumber", e.target.value)}
+              disabled={!isDraft}
+              style={input}
+              placeholder="e.g., INV-2024-0091"
+            />
+          </Field>
+        ) : null}
 
         <div style={{ gridColumn: "1 / -1" }}>
           <Field label="Reason">
