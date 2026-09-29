@@ -28,7 +28,7 @@ export default function RequestsTable({ initial }: { initial: Row[] | null }) {
     setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to load requests.");
+      setError(data?.error?.message ?? "Failed to load requests.");
       return;
     }
 

@@ -80,6 +80,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true });
   } catch (e) {
+    console.error("[webhooks/clerk] handler failed", { eventType, error: e });
     return new Response("Webhook handler failed", { status: 500 });
   }
 }

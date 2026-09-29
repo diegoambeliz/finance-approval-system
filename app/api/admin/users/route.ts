@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
 import { requireRole } from "@/server/permissions";
+import { withApiErrors } from "@/server/apiHandler";
 
-export async function GET() {
+export const GET = withApiErrors(async () => {
   const me = await getDbUserOrThrow();
   requireRole(me, "ADMIN");
 
@@ -20,4 +21,4 @@ export async function GET() {
   });
 
   return Response.json({ users });
-}
+});

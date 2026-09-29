@@ -1,19 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
 import { CreateDraftSchema } from "@/server/requests/validators";
+import { forbidden, validationError } from "@/server/errors";
+import { withApiErrors } from "@/server/apiHandler";
 
-export async function POST(req: Request) {
+export const POST = withApiErrors(async (req: Request) => {
   const me = await getDbUserOrThrow();
 
   // only REQUESTER can create
   if (!me.roles.includes("REQUESTER")) {
-    return Response.json({ error: "FORBIDDEN" }, { status: 403 });
+    throw forbidden("Only requesters can create finance requests.");
   }
 
   const body = await req.json().catch(() => null);
   const parsed = CreateDraftSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: "Invalid body", details: parsed.error.flatten() }, { status: 400 });
+    throw validationError("Invalid request.", parsed.error.flatten());
   }
 
   const created = await prisma.financeRequest.create({
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
     },
       status: "DRAFT",
       type: parsed.data.type,
-      
+
       title: null!,
       amount: null!,
       reason: null!,
@@ -32,9 +34,9 @@ export async function POST(req: Request) {
   });
 
   return Response.json({ request: created }, { status: 201 });
-}
+});
 
-export async function GET() {
+export const GET = withApiErrors(async () => {
   const me = await getDbUserOrThrow();
 
   const isPrivileged = me.roles.some((r) => r === "ADMIN" || r === "MANAGER" || r === "FINANCE");
@@ -55,4 +57,4 @@ export async function GET() {
   });
 
   return Response.json({ requests });
-}
+});

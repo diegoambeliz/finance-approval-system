@@ -3,13 +3,15 @@ import { getDbUserOrThrow } from "@/server/auth";
 import { dbToDomainRequest } from "@/server/requests/mapper";
 import { canSubmit } from "@/domain/rules";
 import { submitRequest } from "@/domain/transitions";
+import { invalidState, notFound, validationError } from "@/server/errors";
+import { withApiErrors } from "@/server/apiHandler";
 
-export async function POST(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrors(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
   const existing = await prisma.financeRequest.findUnique({ where: { id } });
-  if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  if (!existing) throw notFound("This request doesn't exist.");
 
   // Domain rule check
   const domainReq = dbToDomainRequest(existing);
@@ -17,7 +19,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
 
   const allowed = canSubmit(domainUser, domainReq);
   if (!allowed.ok) {
-    return Response.json({ error: "CANNOT_SUBMIT", details: allowed.errors }, { status: 400 });
+    throw validationError("This request can't be submitted yet.", allowed.errors);
   }
 
   // Transition (throws only if status invalid)
@@ -25,7 +27,7 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   try {
     next = submitRequest(domainReq);
   } catch {
-    return Response.json({ error: "INVALID_STATE" }, { status: 409 });
+    throw invalidState("This request can no longer be submitted.");
   }
 
   const updated = await prisma.financeRequest.update({
@@ -35,4 +37,4 @@ export async function POST(_: Request, { params }: { params: Promise<{ id: strin
   });
 
   return Response.json({ request: updated });
-}
+});

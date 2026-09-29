@@ -27,7 +27,7 @@ export default function NewRequestButton() {
     setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to create draft.");
+      setError(data?.error?.message ?? "Failed to create draft.");
       return;
     }
 

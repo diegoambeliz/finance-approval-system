@@ -1,8 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
 import { UpdateDraftSchema } from "@/server/requests/validators";
+import { forbidden, invalidState, notFound, validationError } from "@/server/errors";
+import { withApiErrors } from "@/server/apiHandler";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withApiErrors(async (_: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
@@ -24,35 +26,35 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     },
   });
 
-  if (!request) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  if (!request) throw notFound("This request doesn't exist.");
 
   const isPrivileged = me.roles.some((r) => r === "ADMIN" || r === "MANAGER" || r === "FINANCE");
   const canView = isPrivileged || request.createdById === me.id;
 
-  if (!canView) return Response.json({ error: "FORBIDDEN" }, { status: 403 });
+  if (!canView) throw forbidden("You don't have permission to view this request.");
 
   return Response.json({ request });
-}
+});
 
-export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withApiErrors(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
   const existing = await prisma.financeRequest.findUnique({ where: { id } });
-  if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  if (!existing) throw notFound("This request doesn't exist.");
 
   // only owner + REQUESTER can edit drafts
   if (existing.createdById !== me.id || !me.roles.includes("REQUESTER")) {
-    return Response.json({ error: "FORBIDDEN" }, { status: 403 });
+    throw forbidden("You don't have permission to edit this request.");
   }
   if (existing.status !== "DRAFT") {
-    return Response.json({ error: "ONLY_DRAFT_CAN_BE_EDITED" }, { status: 409 });
+    throw invalidState("Only draft requests can be edited.");
   }
 
   const body = await req.json().catch(() => null);
   const parsed = UpdateDraftSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: "Invalid body", details: parsed.error.flatten() }, { status: 400 });
+    throw validationError("Invalid request.", parsed.error.flatten());
   }
 
   const data = parsed.data;
@@ -74,4 +76,4 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   return Response.json({ request: updated });
-}
+});

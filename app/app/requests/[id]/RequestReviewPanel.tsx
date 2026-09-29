@@ -20,12 +20,6 @@ type Req = {
   invoiceNumber?: string | null;
 };
 
-const DECISION_ERROR_MESSAGES: Record<string, string> = {
-  FORBIDDEN_OR_WRONG_STATUS:
-    "You can no longer act on this request — it may already have been decided, or you may not have permission.",
-  INVALID_STATE: "This request is no longer in a state that can be decided.",
-};
-
 export default function RequestReviewPanel({
   requestId,
   initial,
@@ -56,13 +50,7 @@ export default function RequestReviewPanel({
     setLoading(false);
 
     if (!res.ok) {
-      if (res.status === 403) {
-        setError("You don't have permission to review this request.");
-      } else if (res.status === 404) {
-        setError("Request not found.");
-      } else {
-        setError(data?.error ?? "Failed to load request.");
-      }
+      setError(data?.error?.message ?? "Failed to load request.");
       return;
     }
     setReq(data.request);
@@ -87,7 +75,7 @@ export default function RequestReviewPanel({
     setDeciding(false);
 
     if (!res.ok) {
-      setError(DECISION_ERROR_MESSAGES[data?.error] ?? data?.error ?? "Failed to submit decision.");
+      setError(data?.error?.message ?? "Failed to submit decision.");
       return;
     }
 

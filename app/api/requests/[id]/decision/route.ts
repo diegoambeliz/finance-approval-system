@@ -4,18 +4,20 @@ import { dbToDomainRequest } from "@/server/requests/mapper";
 import { canManagerDecide, canFinanceDecide } from "@/domain/rules";
 import { applyManagerDecision, applyFinanceDecision } from "@/domain/transitions";
 import { DecisionSchema } from "@/server/requests/validators";
+import { forbidden, invalidState, notFound, validationError } from "@/server/errors";
+import { withApiErrors } from "@/server/apiHandler";
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withApiErrors(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const me = await getDbUserOrThrow();
 
   const existing = await prisma.financeRequest.findUnique({ where: { id } });
-  if (!existing) return Response.json({ error: "NOT_FOUND" }, { status: 404 });
+  if (!existing) throw notFound("This request doesn't exist.");
 
   const body = await req.json().catch(() => null);
   const parsed = DecisionSchema.safeParse(body);
   if (!parsed.success) {
-    return Response.json({ error: "Invalid body", details: parsed.error.flatten() }, { status: 400 });
+    throw validationError("Invalid request.", parsed.error.flatten());
   }
 
   const domainReq = dbToDomainRequest(existing);
@@ -30,7 +32,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     try {
       next = applyManagerDecision({ req: domainReq, action: parsed.data.action });
     } catch {
-      return Response.json({ error: "INVALID_STATE" }, { status: 409 });
+      throw invalidState("This request is no longer waiting for manager review.");
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -61,7 +63,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     try {
       next = applyFinanceDecision({ req: domainReq, action: parsed.data.action });
     } catch {
-      return Response.json({ error: "INVALID_STATE" }, { status: 409 });
+      throw invalidState("This request is no longer waiting for finance review.");
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -87,5 +89,5 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return Response.json({ request: result });
   }
 
-  return Response.json({ error: "FORBIDDEN_OR_WRONG_STATUS" }, { status: 403 });
-}
+  throw forbidden("You don't have permission to decide on this request right now.");
+});

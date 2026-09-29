@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
+import { forbidden } from "@/server/errors";
+import { withApiErrors } from "@/server/apiHandler";
 
 const SELECT = {
   id: true,
@@ -11,14 +13,14 @@ const SELECT = {
   createdAt: true,
 } as const;
 
-export async function GET() {
+export const GET = withApiErrors(async () => {
   const me = await getDbUserOrThrow();
 
   const isManager = me.roles.includes("MANAGER");
   const isFinance = me.roles.includes("FINANCE");
 
   if (!isManager && !isFinance) {
-    return Response.json({ error: "FORBIDDEN" }, { status: 403 });
+    throw forbidden("You don't have permission to view the approval inbox.");
   }
 
   const [managerRequests, financeRequests] = await Promise.all([
@@ -44,4 +46,4 @@ export async function GET() {
       finance: financeRequests,
     },
   });
-}
+});

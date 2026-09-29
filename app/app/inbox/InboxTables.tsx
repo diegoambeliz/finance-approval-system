@@ -37,7 +37,7 @@ export default function InboxTables({
     setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to load inbox.");
+      setError(data?.error?.message ?? "Failed to load inbox.");
       return;
     }
 

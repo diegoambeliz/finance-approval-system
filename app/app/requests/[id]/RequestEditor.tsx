@@ -44,7 +44,7 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setLoading(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to load request.");
+      setError(data?.error?.message ?? "Failed to load request.");
       return;
     }
     setReq(data.request);
@@ -106,7 +106,7 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setSaving(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to save.");
+      setError(data?.error?.message ?? "Failed to save.");
       return;
     }
 
@@ -127,7 +127,7 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setSubmitting(false);
 
     if (!res.ok) {
-      setError(data?.error ?? "Failed to submit.");
+      setError(data?.error?.message ?? "Failed to submit.");
       return;
     }
 

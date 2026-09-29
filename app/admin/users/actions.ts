@@ -12,7 +12,7 @@ export async function updateUserRoles(userId: string, roles: Role[]): Promise<Ac
 
     if (!res.ok) {
       const data = await res.json().catch(() => null);
-      return { ok: false, error: data?.error ?? `Request failed (${res.status})` };
+      return { ok: false, error: data?.error?.message ?? `Request failed (${res.status})` };
     }
 
     return { ok: true };
