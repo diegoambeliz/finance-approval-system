@@ -36,7 +36,7 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   try {
-    if (eventType === "user.created" || eventType === "user.updated") {
+    if (evt.type === "user.created" || evt.type === "user.updated") {
       const data = evt.data;
 
       const email =
@@ -66,9 +66,8 @@ export async function POST(req: Request) {
       });
     }
 
-    if (eventType === "user.deleted") {
-      const data = evt.data;
-      const userId = (data as any).id; // deleted payload can vary
+    if (evt.type === "user.deleted") {
+      const userId = evt.data.id;
 
       if (userId) {
         await prisma.user.update({

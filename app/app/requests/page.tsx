@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import NewRequestButton from "./NewRequestButton";
 import RequestsTable from "./RequestsTable";
+import type { Row } from "./RequestsTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 async function getRequests() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/requests`, {
@@ -12,7 +14,7 @@ async function getRequests() {
   // If server fetch fails, we'll let client load instead.
   if (!res || !res.ok) return null;
 
-  return res.json().catch(() => null) as Promise<{ requests: any[] } | null>;
+  return res.json().catch(() => null) as Promise<{ requests: Row[] } | null>;
 }
 
 export const dynamic = "force-dynamic";
@@ -22,17 +24,13 @@ export default async function RequestsPage() {
 
   return (
     <main>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 6 }}>My Requests</h1>
-          <p style={{ opacity: 0.8 }}>Create drafts, fill details, then submit for approvals.</p>
-        </div>
-        <NewRequestButton />
-      </div>
+      <PageHeader
+        title="My Requests"
+        subtitle="Create drafts, fill details, then submit for approvals."
+        action={<NewRequestButton />}
+      />
 
-      <div style={{ marginTop: 18 }}>
-        <RequestsTable initial={data?.requests ?? null} />
-      </div>
+      <RequestsTable initial={data?.requests ?? null} />
     </main>
   );
 }

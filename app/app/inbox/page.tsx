@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { getDbUserOrThrow } from "@/server/auth";
 import InboxTables from "./InboxTables";
+import type { Queues } from "./InboxTables";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +16,7 @@ async function getInbox() {
   // If server fetch fails, we'll let client load instead.
   if (!res || !res.ok) return null;
 
-  return res.json().catch(() => null) as Promise<{ queues: { manager: any[] | null; finance: any[] | null } } | null>;
+  return res.json().catch(() => null) as Promise<{ queues: Queues } | null>;
 }
 
 export default async function InboxPage() {
@@ -25,8 +27,7 @@ export default async function InboxPage() {
   if (!isManager && !isFinance) {
     return (
       <main>
-        <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Approval Inbox</h1>
-        <p style={{ opacity: 0.8 }}>You don&apos;t have permission to review requests.</p>
+        <PageHeader title="Approval Inbox" subtitle="You don't have permission to review requests." />
       </main>
     );
   }
@@ -35,8 +36,7 @@ export default async function InboxPage() {
 
   return (
     <main>
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Approval Inbox</h1>
-      <p style={{ opacity: 0.8, marginBottom: 16 }}>Requests waiting for your review.</p>
+      <PageHeader title="Approval Inbox" subtitle="Requests waiting for your review." />
 
       <InboxTables initial={data?.queues ?? null} isManager={isManager} isFinance={isFinance} />
     </main>

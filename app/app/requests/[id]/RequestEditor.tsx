@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TYPE_FIELDS } from "../typeFields";
 import { apiFetch } from "@/lib/apiFetch";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Field, Input, Select, Textarea } from "@/components/ui/Field";
+import { LoadingState, ErrorState } from "@/components/ui/States";
+import { StatusBadge } from "@/components/ui/Badge";
+import type { Decision } from "./DecisionsTimeline";
 
 function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim().length === 0;
@@ -24,7 +30,7 @@ type Req = {
   billingCycle?: string | null;
   invoiceNumber?: string | null;
 
-  decisions?: any[];
+  decisions?: Decision[];
 };
 
 export default function RequestEditor({ requestId, initial }: { requestId: string; initial: Req | null }) {
@@ -140,56 +146,53 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     router.refresh();
   }
 
-  if (loading) return <div style={{ padding: 14 }}>Loading…</div>;
-  if (error && !req) return <div style={{ padding: 14, color: "#b00020" }}>{error}</div>;
-  if (!req) return <div style={{ padding: 14 }}>Not found.</div>;
+  if (loading) return <Card><LoadingState /></Card>;
+  if (error && !req) return <Card><ErrorState message={error} /></Card>;
+  if (!req) return <Card><LoadingState label="Not found." /></Card>;
 
   return (
-    <section style={{ border: "1px solid #ddd", borderRadius: 12, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+    <Card className="p-5">
+      <div className="flex flex-wrap justify-between gap-3">
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>ID</div>
-          <div style={{ fontWeight: 800 }}>{req.id}</div>
+          <div className="mb-1 text-xs font-medium text-muted">ID</div>
+          <div className="text-sm font-semibold text-ink">{req.id}</div>
         </div>
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>Status</div>
-          <div style={{ fontWeight: 800 }}>{req.status}</div>
+          <div className="mb-1 text-xs font-medium text-muted">Status</div>
+          <StatusBadge status={req.status} />
         </div>
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>Type</div>
-          <div style={{ fontWeight: 800 }}>{req.type}</div>
+          <div className="mb-1 text-xs font-medium text-muted">Type</div>
+          <div className="text-sm font-semibold text-ink">{req.type}</div>
         </div>
       </div>
 
-      <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Title">
-          <input
+          <Input
             value={req.title ?? ""}
             onChange={(e) => updateField("title", e.target.value)}
             disabled={!isDraft}
-            style={input}
             placeholder="e.g., New laptop for development"
           />
         </Field>
 
         <Field label="Amount (USD)">
-          <input
+          <Input
             type="number"
             value={req.amount ?? ""}
             onChange={(e) => updateField("amount", e.target.value === "" ? null : Number(e.target.value))}
             disabled={!isDraft}
-            style={input}
             placeholder="e.g., 2400"
           />
         </Field>
 
         {typeFields.includes("vendor") ? (
           <Field label="Vendor">
-            <input
+            <Input
               value={req.vendor ?? ""}
               onChange={(e) => updateField("vendor", e.target.value)}
               disabled={!isDraft}
-              style={input}
               placeholder="e.g., Apple"
             />
           </Field>
@@ -197,11 +200,10 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
 
         {typeFields.includes("costCenter") ? (
           <Field label="Cost Center">
-            <input
+            <Input
               value={req.costCenter ?? ""}
               onChange={(e) => updateField("costCenter", e.target.value)}
               disabled={!isDraft}
-              style={input}
               placeholder="e.g., Engineering"
             />
           </Field>
@@ -209,52 +211,49 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
 
         {typeFields.includes("expenseDate") ? (
           <Field label="Expense Date">
-            <input
+            <Input
               type="date"
               value={req.expenseDate ?? ""}
               onChange={(e) => updateField("expenseDate", e.target.value)}
               disabled={!isDraft}
-              style={input}
             />
           </Field>
         ) : null}
 
         {typeFields.includes("billingCycle") ? (
           <Field label="Billing Cycle">
-            <select
+            <Select
               value={req.billingCycle ?? ""}
               onChange={(e) => updateField("billingCycle", e.target.value)}
               disabled={!isDraft}
-              style={input}
             >
               <option value="" disabled>
                 Select...
               </option>
               <option value="MONTHLY">Monthly</option>
               <option value="YEARLY">Yearly</option>
-            </select>
+            </Select>
           </Field>
         ) : null}
 
         {typeFields.includes("invoiceNumber") ? (
           <Field label="Invoice Number">
-            <input
+            <Input
               value={req.invoiceNumber ?? ""}
               onChange={(e) => updateField("invoiceNumber", e.target.value)}
               disabled={!isDraft}
-              style={input}
               placeholder="e.g., INV-2024-0091"
             />
           </Field>
         ) : null}
 
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="sm:col-span-2">
           <Field label="Reason">
-            <textarea
+            <Textarea
               value={req.reason ?? ""}
               onChange={(e) => updateField("reason", e.target.value)}
               disabled={!isDraft}
-              style={{ ...input, minHeight: 110 }}
+              className="min-h-[110px]"
               placeholder="Why is this needed? What’s the business justification?"
             />
           </Field>
@@ -262,67 +261,30 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
       </div>
 
       {missing.length > 0 && isDraft ? (
-        <div style={{ marginTop: 12, fontSize: 12, opacity: 0.8 }}>
-          Missing required fields for submit: <b>{missing.join(", ")}</b>
+        <div className="mt-4 text-xs text-muted">
+          Missing required fields for submit: <b className="font-semibold text-ink">{missing.join(", ")}</b>
         </div>
       ) : null}
 
-      {error ? <div style={{ marginTop: 10, color: "#b00020", fontSize: 12 }}>{error}</div> : null}
-      {notice ? <div style={{ marginTop: 10, color: "#0a7a2f", fontSize: 12 }}>{notice}</div> : null}
+      {error ? <div className="mt-3 text-xs text-danger">{error}</div> : null}
+      {notice ? <div className="mt-3 text-xs text-success">{notice}</div> : null}
 
-      <div style={{ display: "flex", gap: 10, marginTop: 14, justifyContent: "flex-end", flexWrap: "wrap" }}>
-        <button onClick={load} style={btnSecondary}>
-          Reload
-        </button>
+      <div className="mt-5 flex flex-wrap justify-end gap-2.5">
+        <Button onClick={load}>Reload</Button>
 
-        <button onClick={save} disabled={!isDraft || saving} style={btnSecondary}>
+        <Button onClick={save} disabled={!isDraft || saving}>
           {saving ? "Saving..." : "Save draft"}
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="primary"
           onClick={submit}
           disabled={!isDraft || submitting || missing.length > 0}
-          style={btnPrimary}
           title={missing.length > 0 ? "Fill required fields before submit" : "Submit for approval"}
         >
           {submitting ? "Submitting..." : "Submit"}
-        </button>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label style={{ display: "block" }}>
-      <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>{label}</div>
-      {children}
-    </label>
-  );
-}
-
-const input: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #ddd",
-};
-
-const btnSecondary: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #ddd",
-  background: "#fff",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const btnPrimary: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #111",
-  background: "#111",
-  color: "#fff",
-  fontWeight: 900,
-  cursor: "pointer",
-};

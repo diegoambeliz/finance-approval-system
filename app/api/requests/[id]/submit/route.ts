@@ -15,7 +15,7 @@ export const POST = withApiErrors(async (_: Request, { params }: { params: Promi
 
   // Domain rule check
   const domainReq = dbToDomainRequest(existing);
-  const domainUser = { id: me.id, roles: me.roles as any };
+  const domainUser = { id: me.id, roles: me.roles };
 
   const allowed = canSubmit(domainUser, domainReq);
   if (!allowed.ok) {

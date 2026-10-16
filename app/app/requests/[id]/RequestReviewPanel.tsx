@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TYPE_FIELDS, FIELD_LABELS } from "../typeFields";
 import { apiFetch } from "@/lib/apiFetch";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { ReadField, Textarea } from "@/components/ui/Field";
+import { LoadingState, ErrorState } from "@/components/ui/States";
+import { StatusBadge } from "@/components/ui/Badge";
 
 type Req = {
   id: string;
@@ -90,32 +95,32 @@ export default function RequestReviewPanel({
     router.refresh();
   }
 
-  if (loading) return <div style={{ padding: 14 }}>Loading…</div>;
-  if (error && !req) return <div style={{ padding: 14, color: "#b00020" }}>{error}</div>;
-  if (!req) return <div style={{ padding: 14 }}>Not found.</div>;
+  if (loading) return <Card><LoadingState /></Card>;
+  if (error && !req) return <Card><ErrorState message={error} /></Card>;
+  if (!req) return <Card><LoadingState label="Not found." /></Card>;
 
   const canDecide =
     (isManager && req.status === "WAITING_FOR_MANAGER") || (isFinance && req.status === "WAITING_FOR_FINANCE");
   const relevantFields = TYPE_FIELDS[req.type] ?? [];
 
   return (
-    <section style={{ border: "1px solid #ddd", borderRadius: 12, padding: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+    <Card className="p-5">
+      <div className="flex flex-wrap justify-between gap-3">
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>ID</div>
-          <div style={{ fontWeight: 800 }}>{req.id}</div>
+          <div className="mb-1 text-xs font-medium text-muted">ID</div>
+          <div className="text-sm font-semibold text-ink">{req.id}</div>
         </div>
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>Status</div>
-          <div style={{ fontWeight: 800 }}>{req.status.replaceAll("_", " ")}</div>
+          <div className="mb-1 text-xs font-medium text-muted">Status</div>
+          <StatusBadge status={req.status} />
         </div>
         <div>
-          <div style={{ fontSize: 13, opacity: 0.8 }}>Type</div>
-          <div style={{ fontWeight: 800 }}>{req.type}</div>
+          <div className="mb-1 text-xs font-medium text-muted">Type</div>
+          <div className="text-sm font-semibold text-ink">{req.type}</div>
         </div>
       </div>
 
-      <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <ReadField label="Title" value={req.title} />
         <ReadField label="Amount" value={req.amount == null ? null : `$${req.amount}`} />
 
@@ -123,95 +128,55 @@ export default function RequestReviewPanel({
           <ReadField key={f} label={FIELD_LABELS[f]} value={((req as Record<string, unknown>)[f] as string | null | undefined) ?? null} />
         ))}
 
-        <div style={{ gridColumn: "1 / -1" }}>
+        <div className="sm:col-span-2">
           <ReadField label="Reason" value={req.reason} multiline />
         </div>
       </div>
 
-      {error ? <div style={{ marginTop: 10, color: "#b00020", fontSize: 12 }}>{error}</div> : null}
-      {notice ? <div style={{ marginTop: 10, color: "#0a7a2f", fontSize: 12 }}>{notice}</div> : null}
+      {error ? <div className="mt-3 text-xs text-danger">{error}</div> : null}
+      {notice ? <div className="mt-3 text-xs text-success">{notice}</div> : null}
 
       {canDecide ? (
         showReject ? (
-          <div style={{ marginTop: 14, border: "1px solid #eee", borderRadius: 10, padding: 12 }}>
-            <div style={{ fontWeight: 800, marginBottom: 8 }}>Reject request</div>
+          <div className="mt-5 rounded-control border border-border p-4">
+            <div className="mb-2 text-sm font-semibold text-ink">Reject request</div>
 
-            <label htmlFor="reject-reason" style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
+            <label htmlFor="reject-reason" className="mb-1.5 block text-xs font-medium text-muted">
               Reason
             </label>
-            <textarea
+            <Textarea
               id="reject-reason"
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
-              style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd", minHeight: 80 }}
+              className="min-h-[80px]"
               placeholder="e.g., Cost center does not have sufficient budget."
               maxLength={500}
             />
 
-            <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
-              <button onClick={() => setShowReject(false)} disabled={deciding} style={btnSecondary}>
+            <div className="mt-3 flex justify-end gap-2.5">
+              <Button onClick={() => setShowReject(false)} disabled={deciding}>
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="danger"
                 onClick={() => decide("REJECT", rejectReason.trim())}
                 disabled={deciding || rejectReason.trim().length === 0}
-                style={btnDanger}
               >
                 {deciding ? "Rejecting..." : "Reject Request"}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <div style={{ display: "flex", gap: 10, marginTop: 14, justifyContent: "flex-end" }}>
-            <button onClick={() => setShowReject(true)} disabled={deciding} style={btnDanger}>
+          <div className="mt-5 flex justify-end gap-2.5">
+            <Button variant="danger" onClick={() => setShowReject(true)} disabled={deciding}>
               Reject
-            </button>
-            <button onClick={() => decide("APPROVE")} disabled={deciding} style={btnPrimary}>
+            </Button>
+            <Button variant="primary" onClick={() => decide("APPROVE")} disabled={deciding}>
               {deciding ? "Approving..." : "Approve"}
-            </button>
+            </Button>
           </div>
         )
       ) : null}
-    </section>
+    </Card>
   );
 }
-
-function ReadField({ label, value, multiline }: { label: string; value: string | null; multiline?: boolean }) {
-  return (
-    <div>
-      <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>{label}</div>
-      <div style={{ whiteSpace: multiline ? "pre-wrap" : "nowrap" }}>
-        {value ?? <span style={{ opacity: 0.6 }}>(empty)</span>}
-      </div>
-    </div>
-  );
-}
-
-const btnSecondary: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #ddd",
-  background: "#fff",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const btnPrimary: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #111",
-  background: "#111",
-  color: "#fff",
-  fontWeight: 900,
-  cursor: "pointer",
-};
-
-const btnDanger: React.CSSProperties = {
-  padding: "10px 12px",
-  borderRadius: 10,
-  border: "1px solid #b00020",
-  background: "#fff",
-  color: "#b00020",
-  fontWeight: 800,
-  cursor: "pointer",
-};

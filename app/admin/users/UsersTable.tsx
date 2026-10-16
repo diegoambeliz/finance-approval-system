@@ -3,6 +3,11 @@
 import { useMemo, useState } from "react";
 import type { Role } from "@prisma/client";
 import { updateUserRoles } from "./actions";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Field";
+import { Table, Thead, Th, Tr, Td } from "@/components/ui/Table";
+import { EmptyState } from "@/components/ui/States";
+import { ActiveBadge } from "@/components/ui/Badge";
 
 type UserRow = {
   id: string;
@@ -47,7 +52,7 @@ export default function UsersTable({ users, meId }: { users: UserRow[]; meId: st
     if (!user) return;
 
     // Build next roles (must be >= 1)
-    let next = checked
+    const next = checked
       ? Array.from(new Set([...user.roles, role]))
       : user.roles.filter((r) => r !== role);
 
@@ -81,151 +86,86 @@ export default function UsersTable({ users, meId }: { users: UserRow[]; meId: st
   }
 
   return (
-    <section style={{ border: "1px solid #ddd", borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ padding: 12, borderBottom: "1px solid #eee", display: "flex", gap: 12 }}>
-        <label htmlFor="admin-users-search" style={visuallyHidden}>
+    <Card>
+      <div className="border-b border-border px-5 py-4">
+        <label htmlFor="admin-users-search" className="sr-only">
           Search users by name, email, or id
         </label>
-        <input
+        <Input
           id="admin-users-search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or id..."
-          style={{
-            flex: 1,
-            padding: "10px 12px",
-            border: "1px solid #ddd",
-            borderRadius: 10,
-          }}
         />
       </div>
 
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 980 }}>
-          <thead>
-            <tr style={{ background: "#fafafa", borderBottom: "1px solid #eee" }}>
-              <th style={th}>User</th>
-              <th style={th}>Roles</th>
-              <th style={th}>Status</th>
-              <th style={th}>Created</th>
-              <th style={th}>Updated</th>
+      <Table minWidth={980}>
+        <Thead>
+          <Th>User</Th>
+          <Th>Roles</Th>
+          <Th>Status</Th>
+          <Th>Created</Th>
+          <Th>Updated</Th>
+        </Thead>
+        <tbody>
+          {filtered.map((u) => (
+            <Tr key={u.id}>
+              <Td>
+                <div className="font-medium text-ink">{u.name}</div>
+                <div className="text-xs text-muted">{u.email}</div>
+                <div className="text-[11px] text-muted/80">{u.id}</div>
+              </Td>
+
+              <Td>
+                <div className="flex flex-wrap gap-2.5">
+                  {ALL_ROLES.map((role) => {
+                    const checked = u.roles.includes(role);
+                    const disabled =
+                      saving[u.id] ||
+                      (u.id === meId && role === "ADMIN" && checked); // still allow uncheck? we block UX in handler
+
+                    return (
+                      <label
+                        key={role}
+                        className={`inline-flex items-center gap-2 rounded-pill border px-2.5 py-1.5 text-[13px] transition-colors ${
+                          checked ? "border-accent bg-accent-soft text-accent" : "border-border bg-card text-ink"
+                        } ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={saving[u.id]}
+                          onChange={(e) => onToggleRole(u.id, role, e.target.checked)}
+                        />
+                        <span>{role}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {error[u.id] ? <div className="mt-2 text-xs text-danger">{error[u.id]}</div> : null}
+
+                {saved[u.id] ? <div className="mt-2 text-xs text-success">Saved.</div> : null}
+              </Td>
+
+              <Td>
+                <ActiveBadge isActive={u.isActive} />
+              </Td>
+
+              <Td>{fmtDate(u.createdAt)}</Td>
+              <Td>{fmtDate(u.updatedAt)}</Td>
+            </Tr>
+          ))}
+
+          {filtered.length === 0 ? (
+            <tr>
+              <td colSpan={5}>
+                <EmptyState title="No users match your search." />
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {filtered.map((u) => (
-              <tr key={u.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                <td style={td}>
-                  <div style={{ fontWeight: 600 }}>{u.name}</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{u.email}</div>
-                  <div style={{ fontSize: 11, opacity: 0.6 }}>{u.id}</div>
-                </td>
-
-                <td style={td}>
-                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    {ALL_ROLES.map((role) => {
-                      const checked = u.roles.includes(role);
-                      const disabled =
-                        saving[u.id] ||
-                        (u.id === meId && role === "ADMIN" && checked); // still allow uncheck? we block UX in handler
-
-                      return (
-                        <label
-                          key={role}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            padding: "6px 10px",
-                            border: "1px solid #ddd",
-                            borderRadius: 999,
-                            background: checked ? "#f3f3f3" : "transparent",
-                            opacity: disabled ? 0.7 : 1,
-                            cursor: disabled ? "not-allowed" : "pointer",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={saving[u.id]}
-                            onChange={(e) => onToggleRole(u.id, role, e.target.checked)}
-                          />
-                          <span style={{ fontSize: 13 }}>{role}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-
-                  {error[u.id] ? (
-                    <div style={{ marginTop: 8, color: "#b00020", fontSize: 12 }}>
-                      {error[u.id]}
-                    </div>
-                  ) : null}
-
-                  {saved[u.id] ? (
-                    <div style={{ marginTop: 8, color: "#0a7a2f", fontSize: 12 }}>
-                      Saved.
-                    </div>
-                  ) : null}
-                </td>
-
-                <td style={td}>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      padding: "6px 10px",
-                      borderRadius: 999,
-                      border: "1px solid #ddd",
-                      background: u.isActive ? "#fff" : "#fff3f3",
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {u.isActive ? "Active" : "Disabled"}
-                  </span>
-                </td>
-
-                <td style={td}>{fmtDate(u.createdAt)}</td>
-                <td style={td}>{fmtDate(u.updatedAt)}</td>
-              </tr>
-            ))}
-
-            {filtered.length === 0 ? (
-              <tr>
-                <td style={{ ...td, padding: 18 }} colSpan={5}>
-                  No users match your search.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    </section>
+          ) : null}
+        </tbody>
+      </Table>
+    </Card>
   );
 }
-
-const th: React.CSSProperties = {
-  textAlign: "left",
-  padding: 12,
-  fontSize: 12,
-  textTransform: "uppercase",
-  letterSpacing: 0.6,
-  opacity: 0.7,
-  whiteSpace: "nowrap",
-};
-
-const td: React.CSSProperties = {
-  padding: 12,
-  verticalAlign: "top",
-};
-
-const visuallyHidden: React.CSSProperties = {
-  position: "absolute",
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: "hidden",
-  clip: "rect(0, 0, 0, 0)",
-  whiteSpace: "nowrap",
-  border: 0,
-};

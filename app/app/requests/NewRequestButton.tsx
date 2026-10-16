@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Field";
 
 const TYPES = ["PURCHASE", "REIMBURSEMENT", "SUBSCRIPTION", "INVOICE_PAYMENT"] as const;
 
@@ -44,78 +46,39 @@ export default function NewRequestButton() {
   }
 
   return (
-    <div style={{ position: "relative" }}>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          padding: "10px 14px",
-          borderRadius: 10,
-          border: "1px solid #ddd",
-          background: "#fff",
-          fontWeight: 800,
-          cursor: "pointer",
-        }}
-      >
+    <div className="relative">
+      <Button variant="primary" onClick={() => setOpen(true)}>
         + New Request
-      </button>
+      </Button>
 
       {open ? (
-        <div
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 46,
-            width: 320,
-            border: "1px solid #ddd",
-            borderRadius: 12,
-            background: "#fff",
-            padding: 12,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-            zIndex: 10,
-          }}
-        >
-          <div style={{ fontWeight: 800, marginBottom: 8 }}>Create draft</div>
+        <div className="absolute right-0 top-[46px] z-10 w-80 rounded-card border border-border bg-card p-4 shadow-elevated">
+          <div className="mb-2 text-sm font-semibold text-ink">Create draft</div>
 
-          <label htmlFor="new-request-type" style={{ display: "block", fontSize: 12, opacity: 0.8, marginBottom: 6 }}>
+          <label htmlFor="new-request-type" className="mb-1.5 block text-xs font-medium text-muted">
             Type
           </label>
-          <select
+          <Select
             id="new-request-type"
             value={type}
-            onChange={(e) => setType(e.target.value as any)}
-            style={{ width: "100%", padding: 10, borderRadius: 10, border: "1px solid #ddd" }}
+            onChange={(e) => setType(e.target.value as (typeof TYPES)[number])}
           >
             {TYPES.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
             ))}
-          </select>
+          </Select>
 
-          {error ? <div style={{ marginTop: 10, color: "#b00020", fontSize: 12 }}>{error}</div> : null}
+          {error ? <div className="mt-2.5 text-xs text-danger">{error}</div> : null}
 
-          <div style={{ display: "flex", gap: 10, marginTop: 12, justifyContent: "flex-end" }}>
-            <button
-              onClick={() => setOpen(false)}
-              disabled={loading}
-              style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #ddd", background: "#fff" }}
-            >
+          <div className="mt-3 flex justify-end gap-2.5">
+            <Button size="sm" onClick={() => setOpen(false)} disabled={loading}>
               Cancel
-            </button>
-            <button
-              onClick={createDraft}
-              disabled={loading}
-              style={{
-                padding: "8px 12px",
-                borderRadius: 10,
-                border: "1px solid #111",
-                background: "#111",
-                color: "#fff",
-                fontWeight: 800,
-              }}
-            >
+            </Button>
+            <Button size="sm" variant="primary" onClick={createDraft} disabled={loading}>
               {loading ? "Creating..." : "Create"}
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}

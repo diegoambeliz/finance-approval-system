@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 
 export default function ErrorFallback({
   error,
@@ -14,25 +15,14 @@ export default function ErrorFallback({
   }, [error]);
 
   return (
-    <main style={{ maxWidth: 640, margin: "80px auto", padding: 24, textAlign: "center" }}>
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Something went wrong</h1>
-      <p style={{ opacity: 0.8, marginBottom: 20 }}>
-        We couldn&apos;t load this page. Please try again.
-      </p>
-      <button
-        onClick={() => reset()}
-        style={{
-          padding: "10px 16px",
-          borderRadius: 10,
-          border: "1px solid #111",
-          background: "#111",
-          color: "#fff",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
-        Try again
-      </button>
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
+      <div className="w-full max-w-md rounded-card border border-border bg-card p-10 text-center shadow-card">
+        <h1 className="mb-2 text-[26px] font-bold text-ink">Something went wrong</h1>
+        <p className="mb-8 text-sm text-muted">We couldn&apos;t load this page. Please try again.</p>
+        <Button variant="primary" className="w-full" onClick={() => reset()}>
+          Try again
+        </Button>
+      </div>
     </main>
   );
 }

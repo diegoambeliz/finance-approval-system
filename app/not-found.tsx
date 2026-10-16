@@ -1,27 +1,17 @@
-import Link from "next/link";
+import { LinkButton } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
-    <main style={{ maxWidth: 640, margin: "80px auto", padding: 24, textAlign: "center" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Page not found</h1>
-      <p style={{ opacity: 0.8, marginBottom: 20 }}>
-        The page you&apos;re looking for doesn&apos;t exist, or may have been moved.
-      </p>
-      <Link
-        href="/app"
-        style={{
-          display: "inline-block",
-          padding: "10px 16px",
-          borderRadius: 10,
-          border: "1px solid #111",
-          background: "#111",
-          color: "#fff",
-          textDecoration: "none",
-          fontWeight: 700,
-        }}
-      >
-        Go to Approvals
-      </Link>
+    <main className="flex min-h-screen items-center justify-center bg-canvas px-6">
+      <div className="w-full max-w-md rounded-card border border-border bg-card p-10 text-center shadow-card">
+        <h1 className="mb-2 text-[26px] font-bold text-ink">Page not found</h1>
+        <p className="mb-8 text-sm text-muted">
+          The page you&apos;re looking for doesn&apos;t exist, or may have been moved.
+        </p>
+        <LinkButton href="/app" variant="primary" className="w-full">
+          Go to Approvals
+        </LinkButton>
+      </div>
     </main>
   );
 }

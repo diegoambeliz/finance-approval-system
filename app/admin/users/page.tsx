@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getDbUserOrThrow } from "@/server/auth";
 import { requireRole } from "@/server/permissions";
 import UsersTable from "./UsersTable";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -23,13 +24,11 @@ export default async function AdminUsersPage() {
   });
 
   return (
-    <main style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
-        Admin — Users & Roles
-      </h1>
-      <p style={{ marginBottom: 16, opacity: 0.8 }}>
-        Manage role assignments. A user can have multiple roles (e.g., ADMIN + MANAGER).
-      </p>
+    <main>
+      <PageHeader
+        title="Users & Roles"
+        subtitle="Manage role assignments. A user can have multiple roles (e.g., ADMIN + MANAGER)."
+      />
 
       <UsersTable users={users} meId={me.id} />
     </main>

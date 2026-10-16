@@ -3,6 +3,7 @@ import RequestEditor from "./RequestEditor";
 import RequestReviewPanel from "./RequestReviewPanel";
 import DecisionsTimeline from "./DecisionsTimeline";
 import { getDbUserOrThrow } from "@/server/auth";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -30,10 +31,10 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
 
   return (
     <main>
-      <h1 style={{ fontSize: 26, fontWeight: 800, marginBottom: 8 }}>Request</h1>
-      <p style={{ opacity: 0.8, marginBottom: 16 }}>
-        {isDraftOwner ? "Edit your draft, then submit for approval." : "Review request details."}
-      </p>
+      <PageHeader
+        title="Request"
+        subtitle={isDraftOwner ? "Edit your draft, then submit for approval." : "Review request details."}
+      />
 
       {isDraftOwner ? (
         <RequestEditor requestId={id} initial={initial} />
@@ -41,7 +42,7 @@ export default async function RequestDetailPage({ params }: { params: Promise<{ 
         <RequestReviewPanel requestId={id} initial={initial} isManager={isManager} isFinance={isFinance} />
       )}
 
-      <div style={{ marginTop: 18 }}>
+      <div className="mt-4">
         <DecisionsTimeline initial={initial?.decisions ?? []} />
       </div>
     </main>

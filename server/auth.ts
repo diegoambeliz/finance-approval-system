@@ -13,3 +13,13 @@ export async function getDbUserOrThrow() {
 
   return dbUser;
 }
+
+export async function getNavFlags() {
+  const me = await getDbUserOrThrow().catch(() => null);
+
+  return {
+    me,
+    canReview: !!me && (me.roles.includes("MANAGER") || me.roles.includes("FINANCE")),
+    isAdmin: !!me && me.roles.includes("ADMIN"),
+  };
+}

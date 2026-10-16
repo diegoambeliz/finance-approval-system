@@ -21,7 +21,7 @@ export const POST = withApiErrors(async (req: Request, { params }: { params: Pro
   }
 
   const domainReq = dbToDomainRequest(existing);
-  const domainUser = { id: me.id, roles: me.roles as any };
+  const domainUser = { id: me.id, roles: me.roles };
 
   const isManager = me.roles.includes("MANAGER");
   const isFinance = me.roles.includes("FINANCE");
