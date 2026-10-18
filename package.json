@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -13,7 +13,8 @@
     "test:db:up": "node scripts/test-db-up.mjs",
     "test:db:migrate": "node scripts/with-test-env.mjs npx prisma migrate deploy",
     "test:db:reset": "node scripts/with-test-env.mjs npx prisma migrate reset --force",
-    "bootstrap:admin": "node scripts/bootstrap-admin.mjs"
+    "bootstrap:admin": "node scripts/bootstrap-admin.mjs",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.9",
