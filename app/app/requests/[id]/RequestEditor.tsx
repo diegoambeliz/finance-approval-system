@@ -89,8 +89,8 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
     setReq({ ...req, [key]: value });
   }
 
-  async function save() {
-    if (!req) return;
+  async function save(): Promise<boolean> {
+    if (!req) return false;
     setSaving(true);
     setError(null);
     setNotice(null);
@@ -116,17 +116,25 @@ export default function RequestEditor({ requestId, initial }: { requestId: strin
 
     if (!ok) {
       setError(data?.error?.message ?? "Failed to save.");
-      return;
+      return false;
     }
 
     setNotice("Saved.");
     setReq((prev) => (prev ? { ...prev, ...data?.request } : prev));
     router.refresh();
+    return true;
   }
 
   async function submit() {
     if (!req) return;
     setSubmitting(true);
+
+    // The submit endpoint validates what is stored in the DB, not what is in
+    // the form, so persist the current edits first.
+    if (!(await save())) {
+      setSubmitting(false);
+      return;
+    }
     setError(null);
     setNotice(null);
 
